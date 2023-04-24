@@ -3,12 +3,15 @@
 #include <vector>
 #include <sstream>
 #include <utility>
+#include <unordered_set>
 
 using namespace std;
 
+const int LONG_FUNCTION_LENGTH = 15;
+
 int menu();
 vector<pair<string, int>> getFunctions(vector<string> lines);
-void longFunction();
+void longFunction(vector<pair<string, int>> funcList, vector<string> lines);
 void longParameterList();
 void duplicateCode();
 
@@ -34,9 +37,16 @@ int main(int argc, char** argv) {
     }
 
     vector<pair<string, int>> funcList = getFunctions(lines);
+    int funcCount = (int)funcList.size();
 
-    for (long unsigned int i = 0; i < funcList.size(); i++) {
-        cout << "function " << funcList[i].first << " at line " << funcList[i].second << endl;
+    cout << "Welcome to Code Smell Detection! The input file contains the "
+         << "following functions: ";
+
+    for (int i = 0; i < funcCount; i++) {
+        if (i == funcCount - 1)
+            cout << funcList[i].first << "." << endl;
+        else 
+            cout << funcList[i].first << ", ";
     }
 
     int choice = 0;
@@ -44,7 +54,7 @@ int main(int argc, char** argv) {
         choice = menu();
         switch(choice) {
             case 1:
-                longFunction();
+                longFunction(funcList, lines);
                 break;
             case 2:
                 longParameterList();
@@ -79,6 +89,7 @@ int menu() {
 
 vector<pair<string, int>> getFunctions(vector<string> lines) {
     vector<pair<string, int>> funcList;
+    unordered_set<string> funcSet;
     for (long unsigned int i = 0; i < lines.size(); i++) {
         string line = lines[i];
         stringstream ss;
@@ -88,16 +99,48 @@ vector<pair<string, int>> getFunctions(vector<string> lines) {
             string::size_type loc = temp.find('(');
             if (loc != string::npos) {
                 string funcName = temp.substr(0, loc);
-                pair<string, int> funcLinePair = make_pair(funcName, i);
-                funcList.push_back(funcLinePair);
+                if (isalpha(funcName[0]) && funcSet.count(funcName) == 0) {
+                    pair<string, int> funcLinePair = make_pair(funcName, i);
+                    funcList.push_back(funcLinePair);
+                    funcSet.insert(funcName);
+                }
             }
         }
     }
     return funcList;
 }
 
-void longFunction() {
-    cout << "long function" << endl;
+void longFunction(vector<pair<string, int>> funcList, vector<string> lines) {
+    vector<pair<string, int>> longFuncList;
+
+    int funcCount = (int)funcList.size();
+    int maxLines = (int)lines.size();
+    for (int i = 0; i < funcCount; i++) {
+        int lineCount = 1;
+        int lineIndex = funcList[i].second;
+        string currentLine = lines[lineIndex];
+        while (currentLine != "}" && lineIndex < maxLines) {
+            if (!currentLine.empty()) {
+                lineCount++;
+            }
+            lineIndex++;
+            currentLine = lines[lineIndex];
+        }
+        if (lineCount > LONG_FUNCTION_LENGTH) {
+            pair<string, int> longFunc = make_pair(funcList[i].first, lineCount);
+            longFuncList.push_back(longFunc);
+        }
+    }
+
+    if (longFuncList.size() == 0)
+        cout << "There are no long functions." << endl;
+    else {
+        for (int i = 0; i < (int)longFuncList.size(); i++) {
+            cout << longFuncList[i].first << " is a long function. "
+                 << "It contains " << longFuncList[i].second << " lines of "
+                 << "code." << endl;
+        }
+    }
 }
 
 void longParameterList() {
