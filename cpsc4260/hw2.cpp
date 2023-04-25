@@ -8,11 +8,12 @@
 using namespace std;
 
 const int LONG_FUNCTION_LENGTH = 15;
+const int LONG_PARAMETER_LIST_COUNT = 3;
 
 int menu();
 vector<pair<string, int>> getFunctions(vector<string> lines);
 void longFunction(vector<pair<string, int>> funcList, vector<string> lines);
-void longParameterList();
+void longParameterList(vector<pair<string, int>> funcList, vector<string> lines);
 void duplicateCode();
 
 int main(int argc, char** argv) {
@@ -57,7 +58,7 @@ int main(int argc, char** argv) {
                 longFunction(funcList, lines);
                 break;
             case 2:
-                longParameterList();
+                longParameterList(funcList, lines);
                 break;
             case 3:
                 duplicateCode();
@@ -73,6 +74,7 @@ int main(int argc, char** argv) {
 }
 
 int menu() {
+    cout << endl;
     cout << "Please choose what you want to do now:" << endl
          << "1. Long Method/Function Detection" << endl
          << "2. Long Parameter List Detection" << endl
@@ -136,8 +138,36 @@ void longFunction(vector<pair<string, int>> funcList, vector<string> lines) {
         cout << "There are no long functions." << endl;
 }
 
-void longParameterList() {
-    cout << "long parameter" << endl;
+void longParameterList(vector<pair<string, int>> funcList, vector<string> lines) {
+    int longParamListCount = 0;
+    int funcCount = (int)funcList.size();
+    for (int i = 0; i < funcCount; i++) {
+        int parameterCount = 0;
+        int funcLoc = funcList[i].second;
+        string function = lines[funcLoc];
+        string::size_type start = function.find('(');
+        string::size_type end = function.find(')');
+        if (start != string::npos && end != string::npos) {
+            string paramList = function.substr(start, end);
+            stringstream paramStream;
+            paramStream.str(paramList);
+            string temp;
+            while (paramStream >> temp) {
+                if (isalpha(temp[0]))
+                    parameterCount++;
+            }
+            // ??????            
+            parameterCount = (parameterCount / 2) + 1;
+            if (parameterCount > LONG_PARAMETER_LIST_COUNT) {
+                cout << funcList[i].first << " has a long parameter list. Its "
+                     << "parameter list contains " << parameterCount
+                     << " parameters." << endl;
+                longParamListCount++;
+            }
+        }
+    }
+    if (longParamListCount == 0)
+        cout << "No function has a long parameter list." << endl;
 }
 
 void duplicateCode() {
