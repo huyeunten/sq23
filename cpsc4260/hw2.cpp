@@ -92,27 +92,26 @@ vector<pair<string, int>> getFunctions(vector<string> lines) {
     unordered_set<string> funcSet;
     for (long unsigned int i = 0; i < lines.size(); i++) {
         string line = lines[i];
-        stringstream ss;
-        ss.str(line);
-        string temp;
-        while (ss >> temp) {
-            string::size_type loc = temp.find('(');
-            if (loc != string::npos) {
-                string funcName = temp.substr(0, loc);
-                if (isalpha(funcName[0]) && funcSet.count(funcName) == 0) {
+        string::size_type loc = line.find('(');
+        if (loc != string::npos && line[line.size() - 1] != ';') {
+            string possibleFunc = line.substr(0, loc);
+            loc = line.find(' ');
+            if (loc != string::npos && loc != 0) {
+                string funcName = possibleFunc.substr(loc + 1);
+                if (funcSet.count(funcName) == 0) {
                     pair<string, int> funcLinePair = make_pair(funcName, i);
                     funcList.push_back(funcLinePair);
                     funcSet.insert(funcName);
                 }
             }
+
         }
     }
     return funcList;
 }
 
 void longFunction(vector<pair<string, int>> funcList, vector<string> lines) {
-    vector<pair<string, int>> longFuncList;
-
+    int longFuncCount = 0;
     int funcCount = (int)funcList.size();
     int maxLines = (int)lines.size();
     for (int i = 0; i < funcCount; i++) {
@@ -127,20 +126,14 @@ void longFunction(vector<pair<string, int>> funcList, vector<string> lines) {
             currentLine = lines[lineIndex];
         }
         if (lineCount > LONG_FUNCTION_LENGTH) {
-            pair<string, int> longFunc = make_pair(funcList[i].first, lineCount);
-            longFuncList.push_back(longFunc);
+            cout << funcList[i].first << " is a long function. It contains "
+                 << lineCount << " lines of code." << endl;
+            longFuncCount++;
         }
     }
 
-    if (longFuncList.size() == 0)
+    if (longFuncCount == 0)
         cout << "There are no long functions." << endl;
-    else {
-        for (int i = 0; i < (int)longFuncList.size(); i++) {
-            cout << longFuncList[i].first << " is a long function. "
-                 << "It contains " << longFuncList[i].second << " lines of "
-                 << "code." << endl;
-        }
-    }
 }
 
 void longParameterList() {
