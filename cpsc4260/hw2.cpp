@@ -10,10 +10,17 @@ using namespace std;
 const int LONG_FUNCTION_LENGTH = 15;
 const int LONG_PARAMETER_LIST_COUNT = 3;
 
+struct function {
+    string name;
+    int start;
+    int end;
+};
+
 int menu();
-vector<pair<string, int>> getFunctions(vector<string> lines);
-void longFunction(vector<pair<string, int>> funcList, vector<string> lines);
-void longParameterList(vector<pair<string, int>> funcList, vector<string> lines);
+vector<function> getFunctions(vector<string> lines);
+void getFunctionLength(vector<function> &funcList, vector<string> lines);
+void longFunction(vector<function> funcList, vector<string> lines);
+void longParameterList(vector<function> funcList, vector<string> lines);
 void duplicateCode();
 
 int main(int argc, char** argv) {
@@ -37,7 +44,8 @@ int main(int argc, char** argv) {
         lines.push_back(line);
     }
 
-    vector<pair<string, int>> funcList = getFunctions(lines);
+    vector<function> funcList = getFunctions(lines);
+    getFunctionLength(funcList, lines);
     int funcCount = (int)funcList.size();
 
     cout << "Welcome to Code Smell Detection! The input file contains the "
@@ -45,9 +53,9 @@ int main(int argc, char** argv) {
 
     for (int i = 0; i < funcCount; i++) {
         if (i == funcCount - 1)
-            cout << funcList[i].first << "." << endl;
+            cout << funcList[i].name << "." << endl;
         else 
-            cout << funcList[i].first << ", ";
+            cout << funcList[i].name << ", ";
     }
 
     int choice = 0;
@@ -89,21 +97,23 @@ int menu() {
     return input;
 }
 
-vector<pair<string, int>> getFunctions(vector<string> lines) {
-    vector<pair<string, int>> funcList;
+vector<function> getFunctions(vector<string> lines) {
+    vector<function> funcList;
+    function func;
     unordered_set<string> funcSet;
     for (long unsigned int i = 0; i < lines.size(); i++) {
         string line = lines[i];
         string::size_type loc = line.find('(');
         if (loc != string::npos && line[line.size() - 1] != ';') {
-            string possibleFunc = line.substr(0, loc);
+            string possibleFuncName = line.substr(0, loc);
             loc = line.find(' ');
             if (loc != string::npos && loc != 0) {
-                string funcName = possibleFunc.substr(loc + 1);
+                string funcName = possibleFuncName.substr(loc + 1);
                 if (funcSet.count(funcName) == 0) {
-                    pair<string, int> funcLinePair = make_pair(funcName, i);
-                    funcList.push_back(funcLinePair);
+                    func.name = funcName;
+                    func.start = i;
                     funcSet.insert(funcName);
+                    funcList.push_back(func);
                 }
             }
 
@@ -112,62 +122,98 @@ vector<pair<string, int>> getFunctions(vector<string> lines) {
     return funcList;
 }
 
-void longFunction(vector<pair<string, int>> funcList, vector<string> lines) {
-    int longFuncCount = 0;
+void getFunctionLength(vector<function> &funcList, vector<string> lines) {
     int funcCount = (int)funcList.size();
-    int maxLines = (int)lines.size();
+    string currentLine;
     for (int i = 0; i < funcCount; i++) {
-        int lineCount = 1;
-        int lineIndex = funcList[i].second;
-        string currentLine = lines[lineIndex];
-        while (currentLine != "}" && lineIndex < maxLines) {
+        int count = 1;
+        int lineIndex = funcList[i].start;
+        int bracketCount = 0;
+        bool foundEnd = false;
+        while (!foundEnd) {
+            currentLine = lines[lineIndex];
             if (!currentLine.empty()) {
-                lineCount++;
+                count++;
+                string::size_type openBracket = currentLine.find('{');
+                if (openBracket != string::npos)
+                    bracketCount++;
+                string::size_type closeBracket = currentLine.find('}');
+                if (closeBracket != string::npos)
+                    bracketCount--;
             }
             lineIndex++;
-            currentLine = lines[lineIndex];
+            if (bracketCount == 0)
+                foundEnd = true;
         }
-        if (lineCount > LONG_FUNCTION_LENGTH) {
-            cout << funcList[i].first << " is a long function. It contains "
-                 << lineCount << " lines of code." << endl;
+        funcList[i].end = lineIndex;
+    }
+}
+
+void longFunction(vector<function> funcList, vector<string> lines) {
+    int longFuncCount = 0;
+    int funcCount = (int)funcList.size();
+    for (int i = 0; i < funcCount; i++) {
+        int length = funcList[i].end - funcList[i].start;
+        if (length > LONG_FUNCTION_LENGTH) {
+            cout << funcList[i].name << " is a long function. It contains "
+                 << length << " lines of code." << endl;
             longFuncCount++;
         }
     }
+    // int maxLines = (int)lines.size();
+    // for (int i = 0; i < funcCount; i++) {
+    //     int lineCount = 1;
+    //     int lineIndex = funcList[i].second;
+    //     string currentLine = lines[lineIndex];
+    //     while (currentLine != "}" && lineIndex < maxLines) {
+    //         if (!currentLine.empty()) {
+    //             lineCount++;
+    //         }
+    //         lineIndex++;
+    //         currentLine = lines[lineIndex];
+    //     }
+    //     if (lineCount > LONG_FUNCTION_LENGTH) {
+    //         cout << funcList[i].first << " is a long function. It contains "
+    //              << lineCount << " lines of code." << endl;
+    //         longFuncCount++;
+    //     }
+    // }
 
     if (longFuncCount == 0)
         cout << "There are no long functions." << endl;
 }
 
-void longParameterList(vector<pair<string, int>> funcList, vector<string> lines) {
-    int longParamListCount = 0;
-    int funcCount = (int)funcList.size();
-    for (int i = 0; i < funcCount; i++) {
-        int parameterCount = 0;
-        int funcLoc = funcList[i].second;
-        string function = lines[funcLoc];
-        string::size_type start = function.find('(');
-        string::size_type end = function.find(')');
-        if (start != string::npos && end != string::npos) {
-            string paramList = function.substr(start, end);
-            stringstream paramStream;
-            paramStream.str(paramList);
-            string temp;
-            while (paramStream >> temp) {
-                if (isalpha(temp[0]))
-                    parameterCount++;
-            }
-            // ??????            
-            parameterCount = (parameterCount / 2) + 1;
-            if (parameterCount > LONG_PARAMETER_LIST_COUNT) {
-                cout << funcList[i].first << " has a long parameter list. Its "
-                     << "parameter list contains " << parameterCount
-                     << " parameters." << endl;
-                longParamListCount++;
-            }
-        }
-    }
-    if (longParamListCount == 0)
-        cout << "No function has a long parameter list." << endl;
+void longParameterList(vector<function> funcList, vector<string> lines) {
+    cout << "long parameter list" << endl;
+    // int longParamListCount = 0;
+    // int funcCount = (int)funcList.size();
+    // for (int i = 0; i < funcCount; i++) {
+    //     int parameterCount = 0;
+    //     int funcLoc = funcList[i].second;
+    //     string function = lines[funcLoc];
+    //     string::size_type start = function.find('(');
+    //     string::size_type end = function.find(')');
+    //     if (start != string::npos && end != string::npos) {
+    //         string paramList = function.substr(start + 1, end);
+    //         stringstream paramStream;
+    //         paramStream.str(paramList);
+    //         string temp;
+    //         while (paramStream >> temp) {
+    //             if (isalpha(temp[0]))
+    //                 parameterCount++;
+    //         }
+    //         // ??????            
+    //         parameterCount = (parameterCount / 2) - 1;
+    //         if (parameterCount > LONG_PARAMETER_LIST_COUNT) {
+    //             cout << funcList[i].first << " has a long parameter list. Its "
+    //                  << "parameter list contains " << parameterCount
+    //                  << " parameters." << endl;
+    //             longParamListCount++;
+    //         }
+    //     }
+    // }
+    // if (longParamListCount == 0)
+    //     cout << "No function has a long parameter list." << endl;
 }
 
 void duplicateCode() {
