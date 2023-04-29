@@ -160,60 +160,39 @@ void longFunction(vector<function> funcList, vector<string> lines) {
             longFuncCount++;
         }
     }
-    // int maxLines = (int)lines.size();
-    // for (int i = 0; i < funcCount; i++) {
-    //     int lineCount = 1;
-    //     int lineIndex = funcList[i].second;
-    //     string currentLine = lines[lineIndex];
-    //     while (currentLine != "}" && lineIndex < maxLines) {
-    //         if (!currentLine.empty()) {
-    //             lineCount++;
-    //         }
-    //         lineIndex++;
-    //         currentLine = lines[lineIndex];
-    //     }
-    //     if (lineCount > LONG_FUNCTION_LENGTH) {
-    //         cout << funcList[i].first << " is a long function. It contains "
-    //              << lineCount << " lines of code." << endl;
-    //         longFuncCount++;
-    //     }
-    // }
-
     if (longFuncCount == 0)
         cout << "There are no long functions." << endl;
 }
 
 void longParameterList(vector<function> funcList, vector<string> lines) {
-    cout << "long parameter list" << endl;
-    // int longParamListCount = 0;
-    // int funcCount = (int)funcList.size();
-    // for (int i = 0; i < funcCount; i++) {
-    //     int parameterCount = 0;
-    //     int funcLoc = funcList[i].second;
-    //     string function = lines[funcLoc];
-    //     string::size_type start = function.find('(');
-    //     string::size_type end = function.find(')');
-    //     if (start != string::npos && end != string::npos) {
-    //         string paramList = function.substr(start + 1, end);
-    //         stringstream paramStream;
-    //         paramStream.str(paramList);
-    //         string temp;
-    //         while (paramStream >> temp) {
-    //             if (isalpha(temp[0]))
-    //                 parameterCount++;
-    //         }
-    //         // ??????            
-    //         parameterCount = (parameterCount / 2) - 1;
-    //         if (parameterCount > LONG_PARAMETER_LIST_COUNT) {
-    //             cout << funcList[i].first << " has a long parameter list. Its "
-    //                  << "parameter list contains " << parameterCount
-    //                  << " parameters." << endl;
-    //             longParamListCount++;
-    //         }
-    //     }
-    // }
-    // if (longParamListCount == 0)
-    //     cout << "No function has a long parameter list." << endl;
+    int longParamListCount = 0;
+    int funcCount = (int)funcList.size();
+    for (int i = 0; i < funcCount; i++) {
+        int parameterCount = 0;
+        int funcLoc = funcList[i].start;
+        string function = lines[funcLoc];
+        string::size_type start = function.find('(');
+        string::size_type end = function.find(')');
+        if (start != string::npos && end != string::npos) {
+            string paramList = function.substr(start + 1, end);
+            stringstream paramStream;
+            paramStream.str(paramList);
+            string temp;
+            while (paramStream >> temp) {
+                if (isalpha(temp[0]))
+                    parameterCount++;
+            }
+            parameterCount /= 2;
+            if (parameterCount > LONG_PARAMETER_LIST_COUNT) {
+                cout << funcList[i].name << " has a long parameter list. Its "
+                     << "parameter list contains " << parameterCount
+                     << " parameters." << endl;
+                longParamListCount++;
+            }
+        }
+    }
+    if (longParamListCount == 0)
+        cout << "No function has a long parameter list." << endl;
 }
 
 void duplicateCode() {
