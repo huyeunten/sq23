@@ -4,11 +4,14 @@
 #include <sstream>
 #include <utility>
 #include <unordered_set>
+#include <algorithm>
+#include <set>
 
 using namespace std;
 
 const int LONG_FUNCTION_LENGTH = 15;
 const int LONG_PARAMETER_LIST_COUNT = 3;
+const double DUPLICATED_THRESHOLD = 0.75;
 
 struct function {
     string name;
@@ -21,20 +24,24 @@ vector<function> getFunctions(vector<string> lines);
 void getFunctionLength(vector<function> &funcList, vector<string> lines);
 void longFunction(vector<function> funcList, vector<string> lines);
 void longParameterList(vector<function> funcList, vector<string> lines);
-void duplicateCode();
+set<char> getFunctionSet(function func, vector<string> lines);
+set<char> getIntersection(set<char> first, set<char> second);
+set<char> getUnion(set<char> first, set<char> second);
+void print(set<char> set);
+void duplicateCode(vector<function> funcList, vector<string> lines);
 
 int main(int argc, char** argv) {
     if (argc != 2) {
         cout << "Usage: ./hw2 file_name.cpp" << endl;
-        return -1;
+        exit(1);
     }
 
     string file = argv[1];
     ifstream inputFile;
     inputFile.open(file);
     if (inputFile.fail()) {
-        cout << "File failed to open" << endl;
-        return -1;
+        cout << "File could not be opened" << endl;
+        exit(1);
     }
 
     vector<string> lines;
@@ -69,7 +76,7 @@ int main(int argc, char** argv) {
                 longParameterList(funcList, lines);
                 break;
             case 3:
-                duplicateCode();
+                duplicateCode(funcList, lines);
                 break;
             case 4:
                 cout << "Goodbye!" << endl;
@@ -195,6 +202,68 @@ void longParameterList(vector<function> funcList, vector<string> lines) {
         cout << "No function has a long parameter list." << endl;
 }
 
-void duplicateCode() {
-    cout << "duplicate code" << endl;
+set<char> getFunctionSet(function func, vector<string> lines) {
+    set<char> funcChars;
+    for (int i = func.start; i < func.end; i++) {
+        string line = lines[i];
+        for (int j = 0; j < (int)line.size(); j++) {
+            char current = line[j];
+            if (current != ' ')
+                funcChars.insert(current);
+        }
+    }
+    return funcChars;
+}
+
+set<char> getIntersection(set<char> first, set<char> second) {
+    set<char> intersection;
+    set_intersection(first.begin(), first.end(), second.begin(), second.end(),
+                     inserter(intersection, intersection.begin()));
+    return intersection;
+}
+
+set<char> getUnion(set<char> first, set<char> second) {
+    set<char> unionSet;
+    set_union(first.begin(), first.end(), second.begin(), second.end(),
+              inserter(unionSet, unionSet.begin()));
+    return unionSet;
+}
+
+void print(set<char> set) {
+    for (auto const &i: set) {
+        cout << i << " ";
+    }
+    cout << endl;
+}
+
+void duplicateCode(vector<function> funcList, vector<string> lines) {
+    int similarCount = 0;
+    vector<set<char>> functionSets;
+    int funcCount = (int)funcList.size();
+    for (int i = 0; i < funcCount; i++) {
+        functionSets.push_back(getFunctionSet(funcList[i], lines));
+    }
+    for (int i = 0; i < funcCount; i++) {
+        for (int j = i + 1; j < funcCount; j++) {
+            set<char> intersection = getIntersection(functionSets[i], functionSets[j]);
+            set<char> unionSet = getUnion(functionSets[i], functionSets[j]);
+            //cout << "printing intersection: ";
+            //print(intersection);
+            //cout << "printing union: ";
+            //print(unionSet);
+            double similarity = (double)intersection.size() / unionSet.size(); // 18/20 = 0.9 ?
+            //cout << "intersection: " << intersection.size() << endl;
+            //cout << "union: " << unionSet.size() << endl;
+            //cout << "similarity: " << similarity << endl;
+            if (similarity >= DUPLICATED_THRESHOLD) {
+                cout << funcList[i].name << " and " << funcList[j].name
+                     << " are duplicated. The Jaccard similarity is "
+                     << similarity << "." << endl;
+                similarCount++;
+            }
+        }
+    }
+    if (similarCount == 0) {
+        cout << "No two functions are duplicated." << endl;
+    }
 }
