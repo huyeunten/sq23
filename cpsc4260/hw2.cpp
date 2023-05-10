@@ -2,7 +2,6 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
-#include <utility>
 #include <unordered_set>
 #include <algorithm>
 #include <set>
@@ -107,9 +106,8 @@ int menu() {
         }
         else if (input > 0 && input < 5)
             validChoice = true;
-        else {
+        else
             cout << "Invalid number. Please enter a number from 1 to 4: ";
-        }
     }
     cout << endl;
     return input;
@@ -153,14 +151,12 @@ void getFunctionLength(vector<function> &funcList, vector<string> lines) {
     int funcCount = (int)funcList.size();
     string currentLine;
     for (int i = 0; i < funcCount; i++) {
-        int count = 1;
         int lineIndex = funcList[i].start;
         int bracketCount = 0;
         bool foundEnd = false;
         while (!foundEnd) {
             currentLine = lines[lineIndex];
             if (!currentLine.empty()) {
-                count++;
                 string::size_type openBracket = currentLine.find('{');
                 if (openBracket != string::npos)
                     bracketCount++;
@@ -248,13 +244,6 @@ set<char> getUnion(set<char> first, set<char> second) {
     set_union(first.begin(), first.end(), second.begin(), second.end(),
               inserter(unionSet, unionSet.begin()));
     return unionSet;
-}
-
-void print(set<char> set) {
-    for (auto const &i: set) {
-        cout << i << " ";
-    }
-    cout << endl;
 }
 
 void duplicateCode(vector<function> funcList, vector<string> lines) {
