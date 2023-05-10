@@ -104,8 +104,7 @@ void addToQueue(queue <int>&q0, int numJobs, int *arrival, int *jobID, int time,
 
 }
 
-void executeQ0(queue <int>&q0, int *burst, int &time, int &prevTime, int *terminate,
-               int &completedJobs, queue <int>&q1) {
+void executeQ0(queue <int>&q0, int *burst, int &time, int &prevTime, int *terminate, int &completedJobs, queue <int>&q1) {
   int cJobID = q0.front();
   q0.pop();
   int job = cJobID - 1;
@@ -125,8 +124,7 @@ void executeQ0(queue <int>&q0, int *burst, int &time, int &prevTime, int *termin
   }
 }
 
-void executeQ1(queue <int>&q1, int *burst, int &time, int &prevTime, int *terminate,
-               int &completedJobs, queue <int>&q2) {
+void executeQ1(queue <int>&q1, int *burst, int &time, int &prevTime, int *terminate, int &completedJobs, queue <int>&q2) {
   int cJobID = q1.front();
   q1.pop();
   int job = cJobID - 1;
@@ -146,8 +144,7 @@ void executeQ1(queue <int>&q1, int *burst, int &time, int &prevTime, int *termin
   }
 }
 
-void executeQ2(queue <int>&q2, int *burst, int &time, int &prevTime, int *terminate,
-               int &completedJobs) {
+void executeQ2(queue <int>&q2, int *burst, int &time, int &prevTime, int *terminate, int &completedJobs) {
   int cJobID = q2.front();
   q2.pop();
   int job = cJobID - 1;

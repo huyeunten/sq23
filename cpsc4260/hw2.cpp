@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <algorithm>
 #include <set>
+#include <limits>
 
 using namespace std;
 
@@ -96,11 +97,21 @@ int menu() {
          << "3. Duplicated Code Detection" << endl
          << "4. Quit" << endl;
     int input;
-    cin >> input;
-    while (!(input > 0 && input < 5)) {
-        cout << "Invalid choice. Please enter a number from 1 to 4: ";
+    bool validChoice = false;
+    while (!validChoice) {
         cin >> input;
+        if (cin.fail()) {
+            cout << "Invalid input. Please enter a number from 1 to 4: ";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+        else if (input > 0 && input < 5)
+            validChoice = true;
+        else {
+            cout << "Invalid number. Please enter a number from 1 to 4: ";
+        }
     }
+    cout << endl;
     return input;
 }
 
@@ -113,11 +124,9 @@ vector<function> getFunctions(vector<string> lines) {
         string::size_type loc = line.find('(');
         if (loc != string::npos && line[line.size() - 1] != ';') {
             string possibleFuncName = line.substr(0, loc);
-            //cout << "found function " << possibleFuncName << endl;
             string::size_type possibleCtor = line.find("::");
             loc = possibleFuncName.find(' ');
             if (loc != string::npos && loc != 0) {
-                //cout << "space loc " << loc << endl;
                 string funcName = possibleFuncName.substr(loc + 1);
                 if (funcSet.count(funcName) == 0) {
                     func.name = funcName;
@@ -196,14 +205,12 @@ void longParameterList(vector<function> funcList, vector<string> lines) {
         string::size_type start = function.find('(');
         string::size_type end = function.find(')');
         if (start != string::npos && end != string::npos) {
-            string paramList = function.substr(start + 1, end);
+            string paramList = function.substr(start + 1, end - start);
             stringstream paramStream;
             paramStream.str(paramList);
             string temp;
-            while (paramStream >> temp) {
-                if (isalpha(temp[0]))
-                    parameterCount++;
-            }
+            while (paramStream >> temp)
+                parameterCount++;
             parameterCount /= 2;
             if (parameterCount > LONG_PARAMETER_LIST_COUNT) {
                 cout << funcList[i].name << " has a long parameter list. Its "
