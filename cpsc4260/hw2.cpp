@@ -113,13 +113,24 @@ vector<function> getFunctions(vector<string> lines) {
         string::size_type loc = line.find('(');
         if (loc != string::npos && line[line.size() - 1] != ';') {
             string possibleFuncName = line.substr(0, loc);
-            loc = line.find(' ');
+            //cout << "found function " << possibleFuncName << endl;
+            string::size_type possibleCtor = line.find("::");
+            loc = possibleFuncName.find(' ');
             if (loc != string::npos && loc != 0) {
+                //cout << "space loc " << loc << endl;
                 string funcName = possibleFuncName.substr(loc + 1);
                 if (funcSet.count(funcName) == 0) {
                     func.name = funcName;
                     func.start = i;
                     funcSet.insert(funcName);
+                    funcList.push_back(func);
+                }
+            }
+            else if (possibleCtor != string::npos) {
+                if (funcSet.count(possibleFuncName) == 0) {
+                    func.name = possibleFuncName;
+                    func.start = i;
+                    funcSet.insert(possibleFuncName);
                     funcList.push_back(func);
                 }
             }
@@ -160,7 +171,11 @@ void longFunction(vector<function> funcList, vector<string> lines) {
     int longFuncCount = 0;
     int funcCount = (int)funcList.size();
     for (int i = 0; i < funcCount; i++) {
-        int length = funcList[i].end - funcList[i].start;
+        int length = 0;
+        for (int j = funcList[i].start; j < funcList[i].end; j++) {
+            if (!lines[j].empty())
+                length++;
+        }
         if (length > LONG_FUNCTION_LENGTH) {
             cout << funcList[i].name << " is a long function. It contains "
                  << length << " lines of code." << endl;
@@ -208,8 +223,7 @@ set<char> getFunctionSet(function func, vector<string> lines) {
         string line = lines[i];
         for (int j = 0; j < (int)line.size(); j++) {
             char current = line[j];
-            if (current != ' ')
-                funcChars.insert(current);
+            funcChars.insert(current);
         }
     }
     return funcChars;
@@ -247,14 +261,7 @@ void duplicateCode(vector<function> funcList, vector<string> lines) {
         for (int j = i + 1; j < funcCount; j++) {
             set<char> intersection = getIntersection(functionSets[i], functionSets[j]);
             set<char> unionSet = getUnion(functionSets[i], functionSets[j]);
-            //cout << "printing intersection: ";
-            //print(intersection);
-            //cout << "printing union: ";
-            //print(unionSet);
-            double similarity = (double)intersection.size() / unionSet.size(); // 18/20 = 0.9 ?
-            //cout << "intersection: " << intersection.size() << endl;
-            //cout << "union: " << unionSet.size() << endl;
-            //cout << "similarity: " << similarity << endl;
+            double similarity = (double)intersection.size() / unionSet.size();
             if (similarity >= DUPLICATED_THRESHOLD) {
                 cout << funcList[i].name << " and " << funcList[j].name
                      << " are duplicated. The Jaccard similarity is "
