@@ -1,10 +1,9 @@
 #include <iostream>
 #include "singleton.h"
 
-Database::Database() {
-    instance = new Database;
-}
 Database *Database::getInstance() {
+    if (instance == nullptr) 
+        instance = new Database();
     return instance;
 }
 void Database::databaseMethods() {
